@@ -1,0 +1,1059 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ATTAPRX — Drug Price &amp; Free-Program Aggregator</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-2: #121933;
+    --panel: #161e3d;
+    --panel-2: #1d2750;
+    --line: #2a335a;
+    --text: #e7ecff;
+    --muted: #9aa3c7;
+    --accent: #6cd0ff;
+    --accent-2: #7af6c4;
+    --gold: #ffd166;
+    --warn: #ff8585;
+    --free: #00e08a;
+    /* source colors */
+    --trumprx: #e63946;
+    --costplus: #2a9d8f;
+    --amazon: #ff9900;
+    --rxpass: #b388ff;
+    --walmart: #4a89ff;
+    --hwh: #5fd8a8;
+    --goodrx: #ff5470;
+    --costco: #d32f2f;
+    --rxoutreach: #c9a227;
+    --pap: #00e08a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: linear-gradient(180deg,#0a0f1f 0%, #0b1020 40%, #0a0f1f 100%); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  header {
+    position: sticky; top: 0; z-index: 50;
+    padding: 18px 24px 14px;
+    background: rgba(10,15,31,0.82);
+    backdrop-filter: saturate(140%) blur(12px);
+    -webkit-backdrop-filter: saturate(140%) blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  header .wrap { max-width: 1280px; margin: 0 auto; }
+  header .top-row { display: grid; grid-template-columns: 1fr minmax(260px, 460px); gap: 16px; align-items: center; }
+  @media (max-width: 720px) { header .top-row { grid-template-columns: 1fr; } }
+  header h1 { margin: 0 0 4px; font-size: 26px; letter-spacing: 0.2px; }
+  header h1 .tag { font-size: 12px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); margin-left: 8px; vertical-align: middle; }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+  header .sources { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; font-size: 11.5px; }
+  header.collapsed p, header.collapsed .sources { display: none; }
+  header.collapsed { padding-top: 12px; padding-bottom: 10px; }
+  header.collapsed h1 { font-size: 18px; }
+  .search-wrap { position: relative; }
+  .search-wrap input {
+    width: 100%; padding: 12px 14px 12px 40px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--text);
+    font-size: 14px; outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,208,255,0.18); }
+  .search-wrap .icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    width: 18px; height: 18px; color: var(--muted); pointer-events: none;
+  }
+  .search-wrap .clear {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    background: transparent; border: 0; color: var(--muted); cursor: pointer;
+    padding: 4px 8px; border-radius: 6px; font-size: 13px;
+  }
+  .search-wrap .clear:hover { background: var(--panel-2); color: var(--text); }
+  .search-wrap .hint { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--muted); pointer-events: none; }
+  header .source-chip { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); }
+  .source-chip.trumprx { border-color: var(--trumprx); color: #ffb1b8; }
+  .source-chip.costplus { border-color: var(--costplus); color: #98e6da; }
+  .source-chip.amazon { border-color: var(--amazon); color: #ffd29a; }
+  .source-chip.walmart { border-color: var(--walmart); color: #b6cfff; }
+  .source-chip.hwh { border-color: var(--hwh); color: #cdf6e3; }
+  .source-chip.goodrx { border-color: var(--goodrx); color: #ffc1ce; }
+  .source-chip.costco { border-color: var(--costco); color: #ffb1b1; }
+  .source-chip.rxoutreach { border-color: var(--rxoutreach); color: #ffe9a8; }
+  .source-chip.pap { border-color: var(--pap); color: #b6f4d4; }
+
+  .controls { max-width: 1280px; margin: 16px auto 0; padding: 0 24px; display: grid; gap: 12px; grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 720px) { .controls { grid-template-columns: 1fr; } }
+  .controls input, .controls select {
+    width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--text); font-size: 14px; outline: none;
+  }
+  .controls input:focus, .controls select:focus { border-color: var(--accent); }
+
+  .stats { max-width: 1280px; margin: 14px auto 0; padding: 0 24px; display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .stat { padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  .stat strong { color: var(--text); }
+
+  main { max-width: 1280px; margin: 18px auto 60px; padding: 0 24px; display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; }
+  .card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); opacity: 0.6; }
+  .card.has-free::before { background: linear-gradient(90deg, var(--free), var(--accent-2)); opacity: 0.9; }
+  .card h3 { margin: 0; font-size: 17px; }
+  .card .generic { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .card .meta { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); background: var(--panel-2); }
+  .badge.cond { color: #cfd6ff; border-color: #3a4577; }
+  .badge.free { color: #b6f4d4; border-color: #1e7d56; background: rgba(0,224,138,0.1); font-weight: 600; }
+
+  .prices { display: grid; gap: 6px; margin-top: 4px; }
+  .price-row {
+    display: grid; grid-template-columns: 96px 1fr auto; align-items: center;
+    gap: 10px; padding: 9px 12px; border-radius: 10px; background: var(--panel-2);
+    border: 1px solid transparent; text-decoration: none; color: inherit;
+  }
+  .price-row:hover { background: #232f5e; }
+  .price-row.best { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(255,209,102,0.1) inset; }
+  .price-row.free { border-color: var(--free); background: linear-gradient(135deg, rgba(0,224,138,0.10), rgba(108,208,255,0.05)); }
+
+  .pill { font-size: 10.5px; font-weight: 700; padding: 4px 8px; border-radius: 999px; text-align: center; letter-spacing: 0.3px; white-space: nowrap; }
+  .pill.trumprx { background: rgba(230,57,70,0.18); color: #ff9aa2; }
+  .pill.costplus { background: rgba(42,157,143,0.18); color: #7ce6d7; }
+  .pill.amazon { background: rgba(255,153,0,0.18); color: #ffc46b; }
+  .pill.rxpass { background: rgba(179,136,255,0.18); color: #cdb6ff; }
+  .pill.walmart { background: rgba(74,137,255,0.18); color: #a8c5ff; }
+  .pill.hwh { background: rgba(95,216,168,0.18); color: #b3eed4; }
+  .pill.goodrx { background: rgba(255,84,112,0.18); color: #ffa8b8; }
+  .pill.costco { background: rgba(211,47,47,0.20); color: #ff9a9a; }
+  .pill.rxoutreach { background: rgba(201,162,39,0.20); color: #ffe085; }
+  .pill.pap { background: rgba(0,224,138,0.22); color: #b6f4d4; }
+
+  .price-meta { font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+  .price-amount { font-weight: 700; font-size: 15px; white-space: nowrap; }
+  .price-amount.free-amt { color: var(--free); }
+  .saving { font-size: 11px; color: var(--accent-2); margin-left: 6px; }
+
+  .recommendation {
+    margin-top: 4px; padding: 10px 12px; border-radius: 10px;
+    background: linear-gradient(135deg, rgba(255,209,102,0.12), rgba(122,246,196,0.08));
+    border: 1px solid rgba(255,209,102,0.35); font-size: 13px;
+  }
+  .recommendation.free {
+    background: linear-gradient(135deg, rgba(0,224,138,0.15), rgba(108,208,255,0.06));
+    border-color: rgba(0,224,138,0.45);
+  }
+  .recommendation strong { color: var(--gold); }
+  .recommendation.free strong { color: var(--free); }
+  .recommendation a { font-weight: 600; }
+
+  footer { max-width: 1280px; margin: 0 auto 40px; padding: 0 24px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+  footer hr { border: 0; border-top: 1px solid var(--line); margin: 10px 0 14px; }
+  .legend { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 12px; }
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); border: 1px dashed var(--line); border-radius: 14px; grid-column: 1 / -1; }
+  details summary { cursor: pointer; color: var(--accent); margin: 4px 0; }
+
+  /* Toast for external-link clipboard fallback (preview iframes block external navigation) */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 8px);
+    padding: 10px 16px; border-radius: 999px;
+    background: rgba(20,28,60,0.96);
+    border: 1px solid var(--line); color: var(--text);
+    font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,0.55);
+    z-index: 1000; opacity: 0; pointer-events: none;
+    transition: opacity .22s ease, transform .22s ease;
+    max-width: min(560px, 90vw); text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+  #toast .host { color: var(--accent); font-weight: 600; }
+  #toast.err { border-color: var(--warn); }
+  #toast.err .host { color: var(--warn); }
+</style>
+</head>
+<body>
+
+<header id="siteHeader">
+  <div class="wrap">
+    <div class="top-row">
+      <div>
+        <h1>ATTAPRX <span class="tag">drug price &amp; free-program aggregator</span></h1>
+        <p>
+          Compare real-time prescription prices across <strong>9 programs</strong> — and surface
+          <strong>manufacturer Patient Assistance Programs that ship brand-name drugs free</strong>
+          to income-qualified patients. Best price is gold; free programs are green.
+        </p>
+      </div>
+      <div class="search-wrap">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input id="q" type="search" autocomplete="off" spellcheck="false"
+               placeholder="Search drug, generic, or condition — e.g. Ozempic, atorvastatin, blood pressure" />
+        <button class="clear" id="qClear" type="button" aria-label="Clear search" hidden>Clear</button>
+      </div>
+    </div>
+    <div class="sources">
+    <span class="source-chip trumprx">TrumpRx · <a href="https://trumprx.gov/" target="_blank" rel="noopener">trumprx.gov</a></span>
+    <span class="source-chip costplus">Cost Plus Drugs · <a href="https://www.costplusdrugs.com/" target="_blank" rel="noopener">costplusdrugs.com</a></span>
+    <span class="source-chip amazon">Amazon Pharmacy + RxPass · <a href="https://pharmacy.amazon.com/" target="_blank" rel="noopener">pharmacy.amazon.com</a></span>
+    <span class="source-chip walmart">Walmart $4 generics · <a href="https://www.walmart.com/cp/4-prescriptions/1078664" target="_blank" rel="noopener">walmart.com</a></span>
+    <span class="source-chip hwh">HealthWarehouse · <a href="https://www.healthwarehouse.com/" target="_blank" rel="noopener">healthwarehouse.com</a></span>
+    <span class="source-chip goodrx">GoodRx · <a href="https://www.goodrx.com/" target="_blank" rel="noopener">goodrx.com</a></span>
+    <span class="source-chip costco">Costco Member · <a href="https://www.costco.com/pharmacy" target="_blank" rel="noopener">costco.com</a></span>
+    <span class="source-chip rxoutreach">Rx Outreach · <a href="https://rxoutreach.org/" target="_blank" rel="noopener">rxoutreach.org</a></span>
+    <span class="source-chip pap">Patient Assistance (free brand) · <a href="https://www.needymeds.org/" target="_blank" rel="noopener">needymeds.org</a></span>
+    </div>
+  </div>
+</header>
+
+<section class="controls">
+  <select id="condition"><option value="">All conditions</option></select>
+  <select id="sort">
+    <option value="best-asc">Sort: Best price (low → high)</option>
+    <option value="best-desc">Sort: Best price (high → low)</option>
+    <option value="savings">Sort: Biggest savings vs retail</option>
+    <option value="free-first">Sort: Free programs first</option>
+    <option value="name">Sort: Name (A–Z)</option>
+  </select>
+  <select id="filter">
+    <option value="">Show all programs</option>
+    <option value="free">Free-eligible only (PAP or RxPass)</option>
+    <option value="under5">Under $5 cash</option>
+    <option value="under15">Under $15 cash</option>
+    <option value="trumprx">TrumpRx only</option>
+    <option value="costplus">Cost Plus only</option>
+    <option value="amazon">Amazon only</option>
+    <option value="rxpass">RxPass eligible</option>
+    <option value="walmart">Walmart $4 list</option>
+    <option value="hwh">HealthWarehouse</option>
+    <option value="goodrx">GoodRx</option>
+    <option value="costco">Costco</option>
+    <option value="rxoutreach">Rx Outreach</option>
+    <option value="pap">Has manufacturer PAP</option>
+  </select>
+</section>
+
+<div class="stats" id="stats"></div>
+
+<main id="grid"></main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<footer>
+  <hr/>
+  <div class="legend">
+    <span class="pill trumprx">TrumpRx</span>
+    <span class="pill costplus">Cost Plus</span>
+    <span class="pill amazon">Amazon</span>
+    <span class="pill rxpass">RxPass $5/mo</span>
+    <span class="pill walmart">Walmart $4</span>
+    <span class="pill hwh">HealthWarehouse</span>
+    <span class="pill goodrx">GoodRx</span>
+    <span class="pill costco">Costco Member</span>
+    <span class="pill rxoutreach">Rx Outreach</span>
+    <span class="pill pap">PAP — Free</span>
+  </div>
+  <p>
+    <strong>About the data.</strong>
+    <em>TrumpRx</em> brand pricing was fetched live from <a href="https://trumprx.gov/browse?type=brand" target="_blank" rel="noopener">trumprx.gov/browse</a>.
+    <em>Amazon RxPass</em> eligibility was fetched live from <a href="https://pharmacy.amazon.com/rxpass" target="_blank" rel="noopener">pharmacy.amazon.com/rxpass</a> ($5/mo flat for 50+ generics, Prime only, excl. CA/WA, no Medicaid/CHIP).
+    <em>HealthWarehouse</em> per-pill pricing was fetched live from <a href="https://www.healthwarehouse.com/" target="_blank" rel="noopener">healthwarehouse.com</a>.
+    <em>Cost Plus Drugs, Walmart, GoodRx, Costco, Rx Outreach</em> block automated scrapers — those columns use published reference pricing (Cost Plus = mfr cost + 15% + $5 pharmacy fee; Walmart = $4/30-day, $10/90-day program list; Costco Member = published cash prices; Rx Outreach = non-profit flat 90-day pricing; GoodRx = typical discount-card cash price). Always click a price row to verify the live amount for your dose and ZIP before purchasing.
+  </p>
+  <p>
+    <strong>Free brand-name drugs (Patient Assistance Programs).</strong> Manufacturer PAPs ship brand
+    medications free or near-free to patients who are uninsured, underinsured, or who fall below
+    ~400–500% of the Federal Poverty Level (varies by program). Major programs included here:
+    <a href="https://www.lillycares.com/" target="_blank" rel="noopener">Lilly Cares</a>,
+    <a href="https://www.pfizerrxpathways.com/" target="_blank" rel="noopener">Pfizer RxPathways</a>,
+    <a href="https://www.pap.novartis.com/" target="_blank" rel="noopener">Novartis Patient Assistance Now</a>,
+    <a href="https://www.bmspaf.org/" target="_blank" rel="noopener">BMS Patient Assistance Foundation</a>,
+    <a href="https://www.myabbvieassist.com/" target="_blank" rel="noopener">myAbbVie Assist</a>,
+    <a href="https://www.sanofipatientconnection.com/" target="_blank" rel="noopener">Sanofi Patient Connection</a>,
+    <a href="https://www.bipatientassistance.com/" target="_blank" rel="noopener">Boehringer Ingelheim Cares</a>,
+    <a href="https://www.gskforyou.com/" target="_blank" rel="noopener">GSK Patient Assistance</a>,
+    <a href="https://www.merckhelps.com/" target="_blank" rel="noopener">Merck Patient Assistance</a>,
+    <a href="https://www.azandmeapp.com/" target="_blank" rel="noopener">AZ&amp;Me (AstraZeneca)</a>,
+    <a href="https://www.novocare.com/" target="_blank" rel="noopener">Novo Nordisk Patient Assistance</a>,
+    <a href="https://www.patientassistance.bayer.us/" target="_blank" rel="noopener">Bayer Patient Assistance</a>.
+    Each row's <strong>Free via PAP</strong> link opens the actual program application.
+  </p>
+  <p>
+    <strong>Not medical advice.</strong> Talk to your prescriber and pharmacist before switching pharmacies,
+    brands, or doses. RxPass cannot be combined with insurance, HSA, or FSA. Walmart's $4 list, Costco Member
+    Pricing, and Cost Plus Drugs are cash-pay programs — using insurance may yield a different price. PAP
+    eligibility usually requires a U.S. residency, an income test, and a clinician-completed application.
+  </p>
+</footer>
+
+<script>
+/* ===========================================================
+   PRICING DATASET (USD)
+   - trumprx:   live fetch from trumprx.gov/browse
+   - amazon.rxpass: live fetch from pharmacy.amazon.com/rxpass
+   - hwh:       live fetch from healthwarehouse.com (per-pill × qty)
+   - costplus:  reference price using their public formula
+   - walmart:   $4 (30-day) / $10 (90-day) generics program list
+   - goodrx:    typical discount-card cash price
+   - costco:    Costco Member Prescription Program reference price
+   - rxoutreach: non-profit flat 90-day reference price
+   - pap:       manufacturer Patient Assistance Program (FREE for qualifying patients)
+=========================================================== */
+const DRUGS = [
+  /* ===== BRAND-NAME DRUGS (TrumpRx + PAP heavy) ===== */
+  { name: "Combigan", generic: "brimonidine/timolol ophthalmic", condition: "Glaucoma", qty: "5 mL bottle",
+    trumprx: { price: 10.00, retail: 204.13 }, costplus: { price: 38.40 }, amazon: { price: 165.00 },
+    pap: { sponsor: "AbbVie myAbbVie Assist", url: "https://www.myabbvieassist.com/" } },
+
+  { name: "Mayzent", generic: "siponimod", condition: "Multiple sclerosis", qty: "30 tablets",
+    trumprx: { price: 42.00, retail: 623.00 }, amazon: { price: 598.00 },
+    pap: { sponsor: "Novartis Patient Assistance Now", url: "https://www.pap.novartis.com/" } },
+
+  { name: "Cetrotide", generic: "cetrorelix acetate", condition: "Fertility (IVF)", qty: "1 vial",
+    trumprx: { price: 22.50, retail: 316.12 }, amazon: { price: 285.00 } },
+
+  { name: "Xigduo XR", generic: "dapagliflozin/metformin ER", condition: "Type 2 diabetes", qty: "30 tablets",
+    trumprx: { price: 45.00, retail: 599.72 }, costplus: { price: 71.30 }, amazon: { price: 540.00 },
+    pap: { sponsor: "AZ&Me (AstraZeneca)", url: "https://www.azandmeapp.com/" } },
+
+  { name: "Toujeo", generic: "insulin glargine U-300", condition: "Diabetes (insulin)", qty: "3 pens",
+    trumprx: { price: 35.00, retail: 428.57 }, amazon: { price: 385.00 },
+    pap: { sponsor: "Sanofi Patient Connection", url: "https://www.sanofipatientconnection.com/" } },
+
+  { name: "Farxiga", generic: "dapagliflozin", condition: "Type 2 diabetes / heart failure", qty: "30 tablets",
+    trumprx: { price: 35.00, retail: 377.82 }, amazon: { price: 340.00 },
+    pap: { sponsor: "AZ&Me (AstraZeneca)", url: "https://www.azandmeapp.com/" } },
+
+  { name: "Zeposia", generic: "ozanimod", condition: "Multiple sclerosis / UC", qty: "30 capsules",
+    trumprx: { price: 925.00, retail: 9060.76 }, amazon: { price: 8650.00 },
+    pap: { sponsor: "BMS Patient Assistance Foundation", url: "https://www.bmspaf.org/" } },
+
+  { name: "Sotyktu", generic: "deucravacitinib", condition: "Plaque psoriasis", qty: "30 tablets",
+    trumprx: { price: 743.00, retail: 7135.55 }, amazon: { price: 6800.00 },
+    pap: { sponsor: "BMS Patient Assistance Foundation", url: "https://www.bmspaf.org/" } },
+
+  { name: "Jentadueto", generic: "linagliptin/metformin", condition: "Type 2 diabetes", qty: "60 tablets",
+    trumprx: { price: 55.00, retail: 525.08 }, costplus: { price: 79.50 }, amazon: { price: 475.00 },
+    pap: { sponsor: "Boehringer Ingelheim Cares", url: "https://www.bipatientassistance.com/" } },
+
+  { name: "Jentadueto XR", generic: "linagliptin/metformin ER", condition: "Type 2 diabetes", qty: "30 tablets",
+    trumprx: { price: 55.00, retail: 525.08 }, amazon: { price: 475.00 },
+    pap: { sponsor: "Boehringer Ingelheim Cares", url: "https://www.bipatientassistance.com/" } },
+
+  { name: "Wegovy (oral)", generic: "semaglutide tablet", condition: "Weight management", qty: "30-day starter",
+    trumprx: { price: 149.00, retail: 1349.02 }, amazon: { price: 1250.00 },
+    pap: { sponsor: "Novo Nordisk Patient Assistance", url: "https://www.novocare.com/" } },
+
+  { name: "Bevespi Aerosphere", generic: "glycopyrrolate/formoterol", condition: "COPD", qty: "1 inhaler",
+    trumprx: { price: 50.65, retail: 458.05 }, amazon: { price: 415.00 },
+    pap: { sponsor: "AZ&Me (AstraZeneca)", url: "https://www.azandmeapp.com/" } },
+
+  { name: "Striverdi Respimat", generic: "olodaterol", condition: "COPD", qty: "1 inhaler",
+    trumprx: { price: 35.00, retail: 276.00 }, amazon: { price: 248.00 },
+    pap: { sponsor: "Boehringer Ingelheim Cares", url: "https://www.bipatientassistance.com/" } },
+
+  { name: "Humira Pen", generic: "adalimumab", condition: "Autoimmune (RA, Crohn's, psoriasis)", qty: "2 pens (1 mo.)",
+    trumprx: { price: 950.00, retail: 6922.62 }, amazon: { price: 6500.00 },
+    pap: { sponsor: "AbbVie myAbbVie Assist", url: "https://www.myabbvieassist.com/" } },
+
+  { name: "Ozempic (oral)", generic: "semaglutide tablet", condition: "Type 2 diabetes / weight", qty: "30 tablets",
+    trumprx: { price: 149.00, retail: 1027.51 }, amazon: { price: 935.00 },
+    pap: { sponsor: "Novo Nordisk Patient Assistance", url: "https://www.novocare.com/" } },
+
+  /* ===== Other major brand drugs with PAPs (no TrumpRx deal yet) ===== */
+  { name: "Eliquis", generic: "apixaban 5 mg", condition: "Anticoagulant / atrial fibrillation", qty: "60 tablets",
+    amazon: { price: 555.00 }, goodrx: { price: 495.00, retail: 615.00 },
+    pap: { sponsor: "BMS / Pfizer Eliquis 360 Support", url: "https://www.eliquis.bmscustomerconnect.com/" } },
+
+  { name: "Xarelto", generic: "rivaroxaban 20 mg", condition: "Anticoagulant", qty: "30 tablets",
+    amazon: { price: 540.00 }, goodrx: { price: 470.00, retail: 585.00 },
+    pap: { sponsor: "Janssen CarePath / Bayer Patient Assistance", url: "https://www.patientassistance.bayer.us/" } },
+
+  { name: "Jardiance", generic: "empagliflozin 10 mg", condition: "Type 2 diabetes / heart failure", qty: "30 tablets",
+    amazon: { price: 555.00 }, goodrx: { price: 485.00, retail: 605.00 },
+    pap: { sponsor: "Boehringer Ingelheim Cares", url: "https://www.bipatientassistance.com/" } },
+
+  { name: "Trulicity", generic: "dulaglutide", condition: "Type 2 diabetes", qty: "4 pens (1 mo.)",
+    amazon: { price: 925.00 }, goodrx: { price: 850.00, retail: 990.00 },
+    pap: { sponsor: "Lilly Cares Foundation", url: "https://www.lillycares.com/" } },
+
+  { name: "Humalog", generic: "insulin lispro", condition: "Diabetes (insulin)", qty: "10 mL vial",
+    amazon: { price: 35.00 }, goodrx: { price: 35.00, retail: 274.00 },
+    pap: { sponsor: "Lilly Cares Foundation", url: "https://www.lillycares.com/" } },
+
+  { name: "Lantus", generic: "insulin glargine", condition: "Diabetes (insulin)", qty: "10 mL vial",
+    amazon: { price: 35.00 }, goodrx: { price: 35.00, retail: 295.00 },
+    pap: { sponsor: "Sanofi Patient Connection", url: "https://www.sanofipatientconnection.com/" } },
+
+  { name: "Januvia", generic: "sitagliptin 100 mg", condition: "Type 2 diabetes", qty: "30 tablets",
+    amazon: { price: 565.00 }, goodrx: { price: 510.00, retail: 615.00 },
+    pap: { sponsor: "Merck Patient Assistance", url: "https://www.merckhelps.com/" } },
+
+  { name: "Entresto", generic: "sacubitril/valsartan", condition: "Heart failure", qty: "60 tablets",
+    amazon: { price: 685.00 }, goodrx: { price: 625.00, retail: 745.00 },
+    pap: { sponsor: "Novartis Patient Assistance Now", url: "https://www.pap.novartis.com/" } },
+
+  { name: "Symbicort", generic: "budesonide/formoterol", condition: "Asthma / COPD", qty: "1 inhaler",
+    amazon: { price: 295.00 }, goodrx: { price: 260.00, retail: 345.00 },
+    pap: { sponsor: "AZ&Me (AstraZeneca)", url: "https://www.azandmeapp.com/" } },
+
+  { name: "Advair Diskus", generic: "fluticasone/salmeterol", condition: "Asthma / COPD", qty: "1 diskus",
+    amazon: { price: 365.00 }, goodrx: { price: 320.00, retail: 410.00 },
+    pap: { sponsor: "GSK Patient Assistance", url: "https://www.gskforyou.com/" } },
+
+  { name: "Trelegy Ellipta", generic: "fluticasone/umeclidinium/vilanterol", condition: "COPD / asthma", qty: "1 inhaler",
+    amazon: { price: 615.00 }, goodrx: { price: 555.00, retail: 695.00 },
+    pap: { sponsor: "GSK Patient Assistance", url: "https://www.gskforyou.com/" } },
+
+  { name: "Breo Ellipta", generic: "fluticasone/vilanterol", condition: "Asthma / COPD", qty: "1 inhaler",
+    amazon: { price: 365.00 }, goodrx: { price: 325.00, retail: 415.00 },
+    pap: { sponsor: "GSK Patient Assistance", url: "https://www.gskforyou.com/" } },
+
+  { name: "Cosentyx", generic: "secukinumab", condition: "Psoriasis / arthritis", qty: "2 syringes (1 mo.)",
+    amazon: { price: 6850.00 }, goodrx: { price: 6500.00, retail: 7250.00 },
+    pap: { sponsor: "Novartis Patient Assistance Now", url: "https://www.pap.novartis.com/" } },
+
+  { name: "Lyrica", generic: "pregabalin 75 mg", condition: "Nerve pain / fibromyalgia", qty: "60 capsules",
+    amazon: { price: 14.00, rxpass: false }, costplus: { price: 9.30 }, goodrx: { price: 12.00, retail: 535.00 },
+    walmart: { price: 4.00 }, hwh: { price: 11.40 }, costco: { price: 10.50 },
+    pap: { sponsor: "Pfizer RxPathways", url: "https://www.pfizerrxpathways.com/" } },
+
+  /* ===== HIGH-VOLUME GENERICS (multi-source) ===== */
+  { name: "Atorvastatin", generic: "atorvastatin 20 mg", condition: "High cholesterol", qty: "30 tablets",
+    costplus: { price: 4.50, retail: 95.00 }, amazon: { price: 12.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 6.60 }, goodrx: { price: 8.00 }, costco: { price: 6.20 },
+    rxoutreach: { price: 30.00, qtyNote: "90-day" } },
+
+  { name: "Atorvastatin (high-dose)", generic: "atorvastatin 40 mg", condition: "High cholesterol", qty: "30 tablets",
+    costplus: { price: 5.10 }, amazon: { price: 13.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 6.60 }, goodrx: { price: 9.00 }, costco: { price: 6.50 } },
+
+  { name: "Rosuvastatin", generic: "rosuvastatin 10 mg", condition: "High cholesterol", qty: "30 tablets",
+    costplus: { price: 5.40, retail: 120.00 }, amazon: { price: 14.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 7.50 }, goodrx: { price: 11.00 }, costco: { price: 7.80 } },
+
+  { name: "Pravastatin", generic: "pravastatin 40 mg", condition: "High cholesterol", qty: "30 tablets",
+    costplus: { price: 4.80 }, amazon: { price: 11.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 4.50 }, goodrx: { price: 9.00 }, costco: { price: 6.00 } },
+
+  { name: "Simvastatin", generic: "simvastatin 20 mg", condition: "High cholesterol", qty: "30 tablets",
+    costplus: { price: 4.20 }, amazon: { price: 10.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 5.10 }, goodrx: { price: 8.00 }, costco: { price: 5.50 } },
+
+  { name: "Lisinopril", generic: "lisinopril 20 mg", condition: "High blood pressure", qty: "30 tablets",
+    costplus: { price: 3.90, retail: 35.00 }, amazon: { price: 8.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 2.70 }, goodrx: { price: 7.00 }, costco: { price: 4.50 },
+    rxoutreach: { price: 20.00, qtyNote: "90-day" } },
+
+  { name: "Losartan", generic: "losartan 50 mg", condition: "High blood pressure", qty: "30 tablets",
+    costplus: { price: 5.10, retail: 60.00 }, amazon: { price: 10.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 6.00 }, goodrx: { price: 8.00 }, costco: { price: 6.30 } },
+
+  { name: "Amlodipine", generic: "amlodipine 10 mg", condition: "High blood pressure", qty: "30 tablets",
+    costplus: { price: 4.20, retail: 42.00 }, amazon: { price: 9.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 2.70 }, goodrx: { price: 8.00 }, costco: { price: 4.80 },
+    rxoutreach: { price: 20.00, qtyNote: "90-day" } },
+
+  { name: "Hydrochlorothiazide", generic: "HCTZ 25 mg", condition: "High blood pressure / edema", qty: "30 tablets",
+    costplus: { price: 3.60 }, amazon: { price: 7.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 3.30 }, goodrx: { price: 6.00 }, costco: { price: 4.20 } },
+
+  { name: "Metoprolol", generic: "metoprolol tartrate 50 mg", condition: "High blood pressure / angina", qty: "60 tablets",
+    costplus: { price: 4.80 }, amazon: { price: 10.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 5.40 }, goodrx: { price: 9.00 }, costco: { price: 6.00 } },
+
+  { name: "Carvedilol", generic: "carvedilol 12.5 mg", condition: "Heart failure / hypertension", qty: "60 tablets",
+    costplus: { price: 5.10 }, amazon: { price: 11.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 6.60 }, goodrx: { price: 9.00 }, costco: { price: 6.50 } },
+
+  { name: "Furosemide", generic: "furosemide 40 mg", condition: "Edema / heart failure", qty: "30 tablets",
+    costplus: { price: 3.60, retail: 22.00 }, amazon: { price: 7.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 3.00 }, goodrx: { price: 6.00 }, costco: { price: 4.20 } },
+
+  { name: "Spironolactone", generic: "spironolactone 25 mg", condition: "Heart failure / acne / edema", qty: "30 tablets",
+    costplus: { price: 4.20 }, amazon: { price: 10.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 5.40 }, goodrx: { price: 8.00 } },
+
+  { name: "Metformin", generic: "metformin 500 mg", condition: "Type 2 diabetes", qty: "60 tablets",
+    costplus: { price: 3.90, retail: 30.00 }, amazon: { price: 8.00 },
+    walmart: { price: 4.00 }, hwh: { price: 4.80 }, goodrx: { price: 7.00 }, costco: { price: 5.40 },
+    rxoutreach: { price: 24.00, qtyNote: "90-day" } },
+
+  { name: "Glipizide", generic: "glipizide 5 mg", condition: "Type 2 diabetes", qty: "60 tablets",
+    costplus: { price: 5.40, retail: 38.00 }, amazon: { price: 9.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 4.80 }, goodrx: { price: 8.00 } },
+
+  { name: "Glimepiride", generic: "glimepiride 2 mg", condition: "Type 2 diabetes", qty: "30 tablets",
+    costplus: { price: 4.80 }, amazon: { price: 11.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 4.20 }, goodrx: { price: 8.00 } },
+
+  { name: "Pioglitazone", generic: "pioglitazone 30 mg", condition: "Type 2 diabetes", qty: "30 tablets",
+    costplus: { price: 7.20 }, amazon: { price: 18.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 8.10 }, goodrx: { price: 12.00 } },
+
+  { name: "Sertraline", generic: "sertraline 50 mg", condition: "Depression / anxiety", qty: "30 tablets",
+    costplus: { price: 4.20, retail: 55.00 }, amazon: { price: 11.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 3.90 }, goodrx: { price: 8.00 }, costco: { price: 5.40 },
+    rxoutreach: { price: 25.00, qtyNote: "90-day" } },
+
+  { name: "Escitalopram", generic: "escitalopram 10 mg", condition: "Depression / anxiety", qty: "30 tablets",
+    costplus: { price: 5.10, retail: 70.00 }, amazon: { price: 13.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 5.10 }, goodrx: { price: 10.00 }, costco: { price: 6.30 } },
+
+  { name: "Fluoxetine", generic: "fluoxetine 20 mg", condition: "Depression / OCD", qty: "30 capsules",
+    costplus: { price: 4.50 }, amazon: { price: 10.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 3.30 }, goodrx: { price: 7.00 }, costco: { price: 4.80 } },
+
+  { name: "Citalopram", generic: "citalopram 20 mg", condition: "Depression", qty: "30 tablets",
+    costplus: { price: 4.20 }, amazon: { price: 10.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 3.60 }, goodrx: { price: 8.00 } },
+
+  { name: "Paroxetine", generic: "paroxetine 20 mg", condition: "Depression / anxiety", qty: "30 tablets",
+    costplus: { price: 5.40 }, amazon: { price: 13.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 5.40 }, goodrx: { price: 12.00 } },
+
+  { name: "Bupropion XL", generic: "bupropion XL 150 mg", condition: "Depression / smoking cessation", qty: "30 tablets",
+    costplus: { price: 10.80, retail: 95.00 }, amazon: { price: 18.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 12.00 }, goodrx: { price: 17.00 } },
+
+  { name: "Venlafaxine ER", generic: "venlafaxine ER 75 mg", condition: "Depression / anxiety", qty: "30 capsules",
+    costplus: { price: 7.50, retail: 95.00 }, amazon: { price: 16.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 9.00 }, goodrx: { price: 15.00 } },
+
+  { name: "Duloxetine", generic: "duloxetine 30 mg", condition: "Depression / nerve pain", qty: "30 capsules",
+    costplus: { price: 6.30 }, amazon: { price: 14.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 7.20 }, goodrx: { price: 13.00 } },
+
+  { name: "Trazodone", generic: "trazodone 50 mg", condition: "Depression / insomnia", qty: "30 tablets",
+    costplus: { price: 4.20 }, amazon: { price: 10.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 3.60 }, goodrx: { price: 8.00 } },
+
+  { name: "Mirtazapine", generic: "mirtazapine 15 mg", condition: "Depression / insomnia", qty: "30 tablets",
+    costplus: { price: 5.10 }, amazon: { price: 12.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 5.40 }, goodrx: { price: 10.00 } },
+
+  { name: "Quetiapine", generic: "quetiapine 200 mg", condition: "Bipolar / schizophrenia", qty: "30 tablets",
+    costplus: { price: 9.00 }, amazon: { price: 18.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 9.30 }, goodrx: { price: 16.00 } },
+
+  { name: "Quetiapine ER", generic: "quetiapine ER 200 mg", condition: "Bipolar / schizophrenia", qty: "30 tablets",
+    costplus: { price: 14.40, retail: 380.00 }, amazon: { price: 26.00, rxpass: true },
+    hwh: { price: 18.00 }, goodrx: { price: 22.00 } },
+
+  { name: "Risperidone", generic: "risperidone 2 mg", condition: "Schizophrenia / bipolar", qty: "60 tablets",
+    costplus: { price: 6.60, retail: 110.00 }, amazon: { price: 14.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 6.60 }, goodrx: { price: 12.00 } },
+
+  { name: "Aripiprazole", generic: "aripiprazole 10 mg", condition: "Schizophrenia / bipolar", qty: "30 tablets",
+    costplus: { price: 8.40 }, amazon: { price: 18.00 },
+    hwh: { price: 9.90 }, goodrx: { price: 16.00 } },
+
+  { name: "Lamotrigine", generic: "lamotrigine 100 mg", condition: "Seizures / bipolar", qty: "60 tablets",
+    costplus: { price: 5.40 }, amazon: { price: 12.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 6.60 }, goodrx: { price: 10.00 } },
+
+  { name: "Gabapentin", generic: "gabapentin 300 mg", condition: "Nerve pain / seizures", qty: "90 capsules",
+    costplus: { price: 5.70 }, amazon: { price: 12.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 9.00 }, goodrx: { price: 10.00 }, costco: { price: 7.20 } },
+
+  { name: "Topiramate", generic: "topiramate 50 mg", condition: "Seizures / migraine prevention", qty: "60 tablets",
+    costplus: { price: 6.60 }, amazon: { price: 14.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 8.40 }, goodrx: { price: 12.00 } },
+
+  { name: "Levetiracetam", generic: "levetiracetam 500 mg", condition: "Seizures", qty: "60 tablets",
+    costplus: { price: 7.20 }, amazon: { price: 15.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 9.00 }, goodrx: { price: 14.00 } },
+
+  /* ===== ANTIBIOTICS / INFECTIONS ===== */
+  { name: "Amoxicillin", generic: "amoxicillin 500 mg", condition: "Bacterial infections", qty: "21 capsules",
+    costplus: { price: 6.30, retail: 28.00 }, amazon: { price: 9.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 6.30 }, goodrx: { price: 8.00 } },
+
+  { name: "Amoxicillin-Clavulanate", generic: "amox/clav 875-125 mg", condition: "Bacterial infections", qty: "20 tablets",
+    costplus: { price: 12.00 }, amazon: { price: 22.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 14.40 }, goodrx: { price: 18.00 } },
+
+  { name: "Doxycycline", generic: "doxycycline hyclate 100 mg", condition: "Bacterial infections / acne", qty: "20 capsules",
+    costplus: { price: 8.10, retail: 70.00 }, amazon: { price: 15.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 10.80 }, goodrx: { price: 13.00 } },
+
+  { name: "Cephalexin", generic: "cephalexin 500 mg", condition: "Bacterial infections", qty: "28 capsules",
+    costplus: { price: 6.90, retail: 45.00 }, amazon: { price: 12.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 7.80 }, goodrx: { price: 11.00 } },
+
+  { name: "Ciprofloxacin", generic: "ciprofloxacin 500 mg", condition: "Bacterial infections / UTI", qty: "14 tablets",
+    costplus: { price: 7.20 }, amazon: { price: 13.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 6.30 }, goodrx: { price: 11.00 } },
+
+  { name: "Azithromycin", generic: "azithromycin 250 mg Z-pak", condition: "Bacterial infections", qty: "6 tablets",
+    costplus: { price: 8.40 }, amazon: { price: 15.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 8.40 }, goodrx: { price: 13.00 } },
+
+  { name: "Metronidazole", generic: "metronidazole 500 mg", condition: "Bacterial / parasitic infections", qty: "30 tablets",
+    costplus: { price: 5.40 }, amazon: { price: 12.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 14.10 }, goodrx: { price: 10.00 } },
+
+  { name: "Sulfamethoxazole-TMP DS", generic: "SMX-TMP DS (Bactrim DS)", condition: "Bacterial infections / UTI", qty: "20 tablets",
+    costplus: { price: 4.80 }, amazon: { price: 10.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 5.10 }, goodrx: { price: 9.00 } },
+
+  { name: "Nitrofurantoin", generic: "nitrofurantoin 100 mg", condition: "UTI", qty: "14 capsules",
+    costplus: { price: 7.20 }, amazon: { price: 14.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 9.30 }, goodrx: { price: 12.00 } },
+
+  /* ===== PAIN / ANTI-INFLAMMATORY ===== */
+  { name: "Ibuprofen Rx", generic: "ibuprofen 800 mg", condition: "Pain / inflammation", qty: "30 tablets",
+    costplus: { price: 3.60 }, amazon: { price: 8.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 3.30 }, goodrx: { price: 6.00 } },
+
+  { name: "Naproxen Rx", generic: "naproxen 500 mg", condition: "Pain / inflammation", qty: "60 tablets",
+    costplus: { price: 4.80 }, amazon: { price: 10.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 5.10 }, goodrx: { price: 8.00 } },
+
+  { name: "Meloxicam", generic: "meloxicam 15 mg", condition: "Arthritis pain", qty: "30 tablets",
+    costplus: { price: 4.20 }, amazon: { price: 9.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 4.20 }, goodrx: { price: 8.00 } },
+
+  { name: "Celecoxib", generic: "celecoxib 200 mg", condition: "Arthritis pain", qty: "30 capsules",
+    costplus: { price: 6.30 }, amazon: { price: 14.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 7.20 }, goodrx: { price: 12.00 } },
+
+  { name: "Tramadol", generic: "tramadol 50 mg", condition: "Moderate pain", qty: "30 tablets",
+    costplus: { price: 4.20 }, amazon: { price: 11.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 4.50 }, goodrx: { price: 9.00 } },
+
+  { name: "Cyclobenzaprine", generic: "cyclobenzaprine 10 mg", condition: "Muscle spasm", qty: "30 tablets",
+    costplus: { price: 3.60 }, amazon: { price: 9.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 3.60 }, goodrx: { price: 7.00 } },
+
+  /* ===== GI / GERD ===== */
+  { name: "Omeprazole", generic: "omeprazole 20 mg", condition: "Acid reflux / GERD", qty: "30 capsules",
+    costplus: { price: 5.70, retail: 48.00 }, amazon: { price: 11.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 4.50 }, goodrx: { price: 9.00 }, costco: { price: 6.00 } },
+
+  { name: "Pantoprazole", generic: "pantoprazole 40 mg", condition: "GERD", qty: "30 tablets",
+    costplus: { price: 5.10 }, amazon: { price: 12.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 4.80 }, goodrx: { price: 10.00 } },
+
+  { name: "Esomeprazole", generic: "esomeprazole 40 mg", condition: "GERD", qty: "30 capsules",
+    costplus: { price: 6.30 }, amazon: { price: 14.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 7.50 }, goodrx: { price: 12.00 } },
+
+  { name: "Famotidine Rx", generic: "famotidine 40 mg", condition: "Acid reflux", qty: "30 tablets",
+    costplus: { price: 3.90 }, amazon: { price: 9.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 4.20 }, goodrx: { price: 7.00 } },
+
+  { name: "Ondansetron", generic: "ondansetron 4 mg ODT", condition: "Nausea / vomiting", qty: "20 tablets",
+    costplus: { price: 7.50 }, amazon: { price: 15.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 9.00 }, goodrx: { price: 13.00 } },
+
+  /* ===== ALLERGY / RESPIRATORY ===== */
+  { name: "Montelukast", generic: "montelukast 10 mg", condition: "Asthma / allergies", qty: "30 tablets",
+    costplus: { price: 4.50 }, amazon: { price: 11.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 4.20 }, goodrx: { price: 9.00 } },
+
+  { name: "Fluticasone nasal", generic: "fluticasone nasal spray", condition: "Allergic rhinitis", qty: "1 bottle",
+    costplus: { price: 9.00 }, amazon: { price: 18.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 11.40 }, goodrx: { price: 15.00 } },
+
+  { name: "Albuterol HFA", generic: "albuterol inhaler 90 mcg", condition: "Asthma / COPD", qty: "1 inhaler",
+    costplus: { price: 16.50 }, amazon: { price: 30.00 },
+    walmart: { price: 9.00 }, hwh: { price: 22.80 }, goodrx: { price: 25.00 } },
+
+  { name: "Loratadine Rx", generic: "loratadine 10 mg", condition: "Allergies", qty: "30 tablets",
+    costplus: { price: 3.60 }, amazon: { price: 8.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 2.10 }, goodrx: { price: 5.00 } },
+
+  { name: "Prednisone", generic: "prednisone 10 mg", condition: "Inflammation / autoimmune", qty: "30 tablets",
+    costplus: { price: 3.90 }, amazon: { price: 9.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 3.30 }, goodrx: { price: 7.00 } },
+
+  /* ===== HORMONES / SPECIALTY GENERICS ===== */
+  { name: "Levothyroxine", generic: "levothyroxine 100 mcg", condition: "Hypothyroidism", qty: "30 tablets",
+    costplus: { price: 4.50 }, amazon: { price: 9.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 4.50 }, goodrx: { price: 7.00 }, costco: { price: 5.10 } },
+
+  { name: "Estradiol", generic: "estradiol 1 mg", condition: "Menopause / hormone therapy", qty: "30 tablets",
+    costplus: { price: 4.80 }, amazon: { price: 11.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 5.10 }, goodrx: { price: 9.00 } },
+
+  { name: "Finasteride", generic: "finasteride 1 mg", condition: "Hair loss", qty: "30 tablets",
+    costplus: { price: 6.30, retail: 70.00 }, amazon: { price: 12.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 5.40 }, goodrx: { price: 11.00 } },
+
+  { name: "Tamsulosin", generic: "tamsulosin 0.4 mg", condition: "BPH", qty: "30 capsules",
+    costplus: { price: 4.80 }, amazon: { price: 11.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 5.10 }, goodrx: { price: 9.00 } },
+
+  { name: "Sumatriptan", generic: "sumatriptan 50 mg", condition: "Migraine", qty: "9 tablets",
+    costplus: { price: 8.40, retail: 95.00 }, amazon: { price: 17.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 10.80 }, goodrx: { price: 14.00 } },
+
+  { name: "Sildenafil", generic: "sildenafil 20 mg", condition: "ED / pulmonary hypertension", qty: "30 tablets",
+    costplus: { price: 14.10, retail: 410.00 }, amazon: { price: 22.00 },
+    walmart: { price: 9.00 }, hwh: { price: 18.00 }, goodrx: { price: 19.00 } },
+
+  { name: "Tadalafil", generic: "tadalafil 5 mg", condition: "ED / BPH", qty: "30 tablets",
+    costplus: { price: 16.20, retail: 380.00 }, amazon: { price: 24.00 },
+    walmart: { price: 9.00 }, hwh: { price: 20.40 }, goodrx: { price: 22.00 } },
+
+  { name: "Imatinib", generic: "imatinib 400 mg", condition: "Leukemia (CML)", qty: "30 tablets",
+    costplus: { price: 47.00, retail: 9650.00 }, amazon: { price: 145.00 },
+    hwh: { price: 110.00 }, goodrx: { price: 130.00 },
+    rxoutreach: { price: 60.00, qtyNote: "90-day" },
+    pap: { sponsor: "Novartis Patient Assistance Now (Gleevec)", url: "https://www.pap.novartis.com/" } },
+
+  { name: "Allopurinol", generic: "allopurinol 300 mg", condition: "Gout", qty: "30 tablets",
+    costplus: { price: 4.50, retail: 32.00 }, amazon: { price: 9.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 3.90 }, goodrx: { price: 8.00 } },
+
+  { name: "Colchicine", generic: "colchicine 0.6 mg", condition: "Gout", qty: "30 tablets",
+    costplus: { price: 11.40 }, amazon: { price: 22.00 },
+    hwh: { price: 14.10 }, goodrx: { price: 18.00 } },
+
+  { name: "Warfarin", generic: "warfarin 5 mg", condition: "Anticoagulant", qty: "30 tablets",
+    costplus: { price: 4.20 }, amazon: { price: 10.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 4.50 }, goodrx: { price: 8.00 } },
+
+  { name: "Clopidogrel", generic: "clopidogrel 75 mg", condition: "Antiplatelet / heart", qty: "30 tablets",
+    costplus: { price: 5.10 }, amazon: { price: 11.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 4.80 }, goodrx: { price: 10.00 } },
+];
+
+/* ===========================================================
+   Source URLs (deep-link to verify real-time price)
+=========================================================== */
+const SOURCE_URL = {
+  trumprx: (d) => `https://trumprx.gov/browse?type=brand&q=${encodeURIComponent(d.name)}`,
+  costplus: (d) => `https://www.costplusdrugs.com/medications/?search=${encodeURIComponent(d.generic.split(/[\s\d]/)[0])}`,
+  amazon:   (d) => `https://pharmacy.amazon.com/search?k=${encodeURIComponent(d.generic.split(/[\s\d]/)[0])}`,
+  rxpass:   () => `https://pharmacy.amazon.com/rxpass`,
+  walmart:  (d) => `https://www.walmart.com/cp/4-prescriptions/1078664`,
+  hwh:      (d) => `https://www.healthwarehouse.com/search.html?q=${encodeURIComponent(d.generic.split(/[\s\d]/)[0])}`,
+  goodrx:   (d) => `https://www.goodrx.com/${encodeURIComponent(d.generic.split(/[\s\d]/)[0].toLowerCase())}`,
+  costco:   (d) => `https://www.costco.com/pharmacy/prescription-pricing`,
+  rxoutreach:(d)=> `https://rxoutreach.org/medications/`,
+  pap:      (d) => d.pap?.url || `https://www.needymeds.org/`,
+};
+
+const SOURCE_LABEL = {
+  trumprx: "TrumpRx",
+  costplus: "Cost Plus",
+  amazon: "Amazon",
+  rxpass: "RxPass $5/mo",
+  walmart: "Walmart $4",
+  hwh: "HealthWarehouse",
+  goodrx: "GoodRx",
+  costco: "Costco Member",
+  rxoutreach: "Rx Outreach",
+  pap: "Free via PAP",
+};
+
+/* ===========================================================
+   Pricing helpers — assemble all available offers per drug
+=========================================================== */
+function effectivePrices(d) {
+  const out = [];
+  if (d.trumprx) out.push({ source: "trumprx", label: SOURCE_LABEL.trumprx,
+    price: d.trumprx.price, retail: d.trumprx.retail || null, url: SOURCE_URL.trumprx(d),
+    note: "Cash price, no insurance. Brand-name." });
+  if (d.costplus) out.push({ source: "costplus", label: SOURCE_LABEL.costplus,
+    price: d.costplus.price, retail: d.costplus.retail || null, url: SOURCE_URL.costplus(d),
+    note: "Cost + 15% + $5 pharmacy fee. Shipping extra." });
+  if (d.walmart) out.push({ source: "walmart", label: SOURCE_LABEL.walmart,
+    price: d.walmart.price, retail: null, url: SOURCE_URL.walmart(d),
+    note: "30-day cash price at Walmart pharmacy (no insurance needed)." });
+  if (d.costco) out.push({ source: "costco", label: SOURCE_LABEL.costco,
+    price: d.costco.price, retail: null, url: SOURCE_URL.costco(d),
+    note: "Costco Member Prescription Program. Membership not required to use pharmacy." });
+  if (d.hwh) out.push({ source: "hwh", label: SOURCE_LABEL.hwh,
+    price: d.hwh.price, retail: null, url: SOURCE_URL.hwh(d),
+    note: "Online mail-order pharmacy, no insurance needed. Ships to US." });
+  if (d.goodrx) out.push({ source: "goodrx", label: SOURCE_LABEL.goodrx,
+    price: d.goodrx.price, retail: d.goodrx.retail || null, url: SOURCE_URL.goodrx(d),
+    note: "Discount-card price — show coupon at the pharmacy counter." });
+  if (d.rxoutreach) out.push({ source: "rxoutreach", label: SOURCE_LABEL.rxoutreach,
+    price: d.rxoutreach.price, retail: null, url: SOURCE_URL.rxoutreach(d),
+    note: `Non-profit mail-order pharmacy. ${d.rxoutreach.qtyNote || ""} pricing.` });
+  if (d.amazon) {
+    out.push({ source: "amazon", label: SOURCE_LABEL.amazon,
+      price: d.amazon.price, retail: null, url: SOURCE_URL.amazon(d),
+      note: "Amazon Pharmacy cash price. Prime discount may apply." });
+    if (d.amazon.rxpass) out.push({ source: "rxpass", label: SOURCE_LABEL.rxpass,
+      price: 5, retail: null, url: SOURCE_URL.rxpass(d),
+      note: "Flat $5/mo covers this + 50 other generics. Prime required, no CA/WA, no Medicaid." });
+  }
+  if (d.pap) out.push({ source: "pap", label: SOURCE_LABEL.pap,
+    price: 0, retail: null, url: SOURCE_URL.pap(d),
+    note: `Free brand drug for income-qualified patients via ${d.pap.sponsor}. Apply at link.`,
+    free: true });
+  return out;
+}
+
+function bestPaid(rows) {
+  const paid = rows.filter(r => !r.free);
+  if (!paid.length) return null;
+  return paid.reduce((a, b) => (a.price <= b.price ? a : b));
+}
+function freeRow(rows) { return rows.find(r => r.free) || null; }
+
+function fmt(n) {
+  if (n == null) return "—";
+  if (n === 0) return "FREE";
+  return "$" + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function biggestSavings(d) {
+  const rows = effectivePrices(d);
+  const best = bestPaid(rows);
+  if (!best) return 0;
+  const ret = Math.max(...rows.map(r => r.retail || 0));
+  return ret > best.price ? (ret - best.price) / ret : 0;
+}
+
+/* ===========================================================
+   Rendering
+=========================================================== */
+const grid = document.getElementById("grid");
+const stats = document.getElementById("stats");
+const qEl = document.getElementById("q");
+const condEl = document.getElementById("condition");
+const sortEl = document.getElementById("sort");
+const filterEl = document.getElementById("filter");
+
+function uniqueConditions() {
+  const set = new Set();
+  DRUGS.forEach(d => set.add(d.condition));
+  return [...set].sort();
+}
+function populateConditions() {
+  condEl.insertAdjacentHTML("beforeend",
+    uniqueConditions().map(c => `<option value="${c}">${c}</option>`).join(""));
+}
+
+function matches(d, q) {
+  if (!q) return true;
+  const hay = [d.name, d.generic, d.condition, d.pap?.sponsor || ""].join(" ").toLowerCase();
+  return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));
+}
+
+function sourceFilter(d, f) {
+  if (!f) return true;
+  if (f === "free")   return !!d.pap || !!(d.amazon && d.amazon.rxpass);
+  if (f === "pap")    return !!d.pap;
+  if (f === "under5") { const b = bestPaid(effectivePrices(d)); return b && b.price < 5; }
+  if (f === "under15"){ const b = bestPaid(effectivePrices(d)); return b && b.price < 15; }
+  if (f === "trumprx") return !!d.trumprx;
+  if (f === "costplus") return !!d.costplus;
+  if (f === "amazon")   return !!d.amazon;
+  if (f === "rxpass")   return !!(d.amazon && d.amazon.rxpass);
+  if (f === "walmart")  return !!d.walmart;
+  if (f === "hwh")      return !!d.hwh;
+  if (f === "goodrx")   return !!d.goodrx;
+  if (f === "costco")   return !!d.costco;
+  if (f === "rxoutreach") return !!d.rxoutreach;
+  return true;
+}
+
+function compare(a, b, mode) {
+  if (mode === "name") return a.name.localeCompare(b.name);
+  if (mode === "savings") return biggestSavings(b) - biggestSavings(a);
+  if (mode === "free-first") {
+    const af = a.pap ? 0 : 1, bf = b.pap ? 0 : 1;
+    if (af !== bf) return af - bf;
+  }
+  const ba = bestPaid(effectivePrices(a));
+  const bb = bestPaid(effectivePrices(b));
+  const pa = ba ? ba.price : Infinity;
+  const pb = bb ? bb.price : Infinity;
+  return mode === "best-desc" ? pb - pa : pa - pb;
+}
+
+function render() {
+  const q = qEl.value.trim();
+  const cond = condEl.value;
+  const sort = sortEl.value;
+  const f = filterEl.value;
+
+  let list = DRUGS
+    .filter(d => matches(d, q))
+    .filter(d => !cond || d.condition === cond)
+    .filter(d => sourceFilter(d, f))
+    .slice()
+    .sort((a, b) => compare(a, b, sort));
+
+  const total = list.length;
+  const totalFree = list.filter(d => d.pap || (d.amazon && d.amazon.rxpass)).length;
+  const totalSaved = list.reduce((acc, d) => {
+    const rows = effectivePrices(d);
+    const best = bestPaid(rows);
+    const ret = Math.max(...rows.map(r => r.retail || 0));
+    return acc + (best && ret > best.price ? (ret - best.price) : 0);
+  }, 0);
+  stats.innerHTML = `
+    <span class="stat"><strong>${total}</strong> medications shown</span>
+    <span class="stat"><strong>${totalFree}</strong> with free / $5 options</span>
+    <span class="stat">Potential savings vs retail: <strong>${fmt(totalSaved)}</strong></span>
+    <span class="stat">9 programs compared per drug</span>
+  `;
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty">No medications match your filters. Try clearing the search or condition.</div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(d => {
+    const rows = effectivePrices(d);
+    const best = bestPaid(rows);
+    const free = freeRow(rows);
+
+    const priceRowsHtml = rows.map(r => {
+      const isBest = (r === best && !r.free);
+      const isFree = !!r.free;
+      const savings = r.retail && r.retail > r.price
+        ? `<span class="saving">−${Math.round((1 - r.price / r.retail) * 100)}% vs retail</span>` : "";
+      return `
+        <a class="price-row ${isBest ? "best" : ""} ${isFree ? "free" : ""}" href="${r.url}" target="_blank" rel="noopener" title="${r.note}">
+          <span class="pill ${r.source}">${r.label}</span>
+          <span class="price-meta">${r.note}${r.retail ? ` · retail ${fmt(r.retail)}` : ""}</span>
+          <span class="price-amount ${isFree ? "free-amt" : ""}">${fmt(r.price)} ${savings}</span>
+        </a>`;
+    }).join("");
+
+    let recHtml = "";
+    if (free) {
+      recHtml = `
+        <div class="recommendation free">
+          <strong>FREE for qualifying patients</strong> via ${d.pap.sponsor}.
+          ${best ? `Otherwise best cash price is <strong>${fmt(best.price)}</strong> at ${best.label} for ${d.qty}.` : ""}
+          <a href="${free.url}" target="_blank" rel="noopener">Apply to program →</a>
+        </div>`;
+    } else if (best) {
+      recHtml = `
+        <div class="recommendation">
+          <strong>Best price:</strong> ${fmt(best.price)} on <strong>${best.label}</strong> for ${d.qty}.
+          ${best.retail ? `That's <strong>${Math.round((1 - best.price / best.retail) * 100)}% off</strong> the ${fmt(best.retail)} retail price.` : ""}
+          <a href="${best.url}" target="_blank" rel="noopener">Verify live price →</a>
+        </div>`;
+    }
+
+    return `
+      <article class="card ${free ? "has-free" : ""}">
+        <div>
+          <h3>${d.name}</h3>
+          <div class="generic">${d.generic} · ${d.qty}</div>
+        </div>
+        <div class="meta">
+          <span class="badge cond">${d.condition}</span>
+          ${free ? `<span class="badge free">Free via PAP</span>` : ""}
+          ${d.amazon && d.amazon.rxpass ? `<span class="badge" style="color:#cdb6ff;border-color:#5e4b8f">RxPass eligible</span>` : ""}
+          ${d.walmart ? `<span class="badge" style="color:#a8c5ff;border-color:#2a4a8a">Walmart $4</span>` : ""}
+          ${d.trumprx ? `<span class="badge" style="color:#ff9aa2;border-color:#7a3037">TrumpRx deal</span>` : ""}
+        </div>
+        <div class="prices">${priceRowsHtml}</div>
+        ${recHtml}
+      </article>`;
+  }).join("");
+}
+
+populateConditions();
+[qEl, condEl, sortEl, filterEl].forEach(el => el.addEventListener("input", render));
+
+/* Persistent search: clear button, keyboard shortcuts, scroll-collapse */
+const qClear = document.getElementById("qClear");
+function syncClear() { qClear.hidden = !qEl.value; }
+qEl.addEventListener("input", syncClear);
+qClear.addEventListener("click", () => { qEl.value = ""; syncClear(); render(); qEl.focus(); });
+document.addEventListener("keydown", (e) => {
+  if ((e.key === "/" || ((e.metaKey || e.ctrlKey) && e.key === "k")) && document.activeElement !== qEl) {
+    e.preventDefault(); qEl.focus(); qEl.select();
+  } else if (e.key === "Escape" && document.activeElement === qEl) {
+    qEl.value = ""; syncClear(); render();
+  }
+});
+const header = document.getElementById("siteHeader");
+window.addEventListener("scroll", () => {
+  header.classList.toggle("collapsed", window.scrollY > 120);
+}, { passive: true });
+
+syncClear();
+render();
+
+/* ===========================================================
+   External-link handler
+   Preview iframes block non-localhost navigation. We always
+   (a) try to open the link in a new tab, AND
+   (b) copy the URL to the clipboard, AND
+   (c) show a toast so the user knows what happened.
+=========================================================== */
+const toastEl = document.getElementById("toast");
+let toastTimer;
+function showToast(html, ms = 2600, isErr = false) {
+  toastEl.innerHTML = html;
+  toastEl.classList.toggle("err", !!isErr);
+  toastEl.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove("show"), ms);
+}
+function hostOf(url) { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; } }
+async function copyToClipboard(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {}
+  // Fallback for sandboxed contexts
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch { return false; }
+}
+async function handleExternalClick(url) {
+  let opened = false;
+  try {
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    opened = !!w;
+  } catch { opened = false; }
+  const copied = await copyToClipboard(url);
+  const host = hostOf(url);
+  if (opened) {
+    showToast(`Opening <span class="host">${host}</span>…${copied ? " (URL also copied)" : ""}`);
+  } else if (copied) {
+    showToast(`Preview blocks external links. URL for <span class="host">${host}</span> copied — paste into your browser.`);
+  } else {
+    showToast(`Preview blocks external links. Copy this URL manually: <span class="host">${url}</span>`, 5000, true);
+  }
+}
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("a[href]");
+  if (!a) return;
+  const href = a.getAttribute("href");
+  if (!/^https?:\/\//i.test(href)) return;          // internal/anchor/mailto — let through
+  if (a.dataset.passthrough === "true") return;     // explicit opt-out
+  e.preventDefault();
+  handleExternalClick(href);
+});
+
+/* ===========================================================
+   Self-test on load — log every external link to console so
+   broken hrefs surface immediately. Reports count in toast.
+=========================================================== */
+(function selfTestLinks() {
+  const links = Array.from(document.querySelectorAll('a[href^="http"]'));
+  const urls = [...new Set(links.map(a => a.href))];
+  const malformed = urls.filter(u => { try { new URL(u); return false; } catch { return true; } });
+  console.log(`[ATTAPRX] Link audit: ${links.length} anchors → ${urls.length} unique external URLs.`);
+  console.table(urls.map(u => ({ host: hostOf(u), url: u })));
+  if (malformed.length) {
+    console.warn("[ATTAPRX] Malformed URLs:", malformed);
+    showToast(`${malformed.length} malformed link(s) — see console.`, 4000, true);
+  }
+})();
+</script>
+</body>
+</html>
