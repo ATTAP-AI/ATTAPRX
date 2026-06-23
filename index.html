@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <title>ATTAPRX — Drug Price &amp; Free-Program Aggregator</title>
 <style>
   :root {
@@ -663,6 +666,55 @@ const DRUGS = [
     costplus: { price: 3.60 }, amazon: { price: 8.00, rxpass: true },
     walmart: { price: 4.00 }, hwh: { price: 2.10 }, goodrx: { price: 5.00 } },
 
+  { name: "Cetirizine Rx", generic: "cetirizine 10 mg", condition: "Allergies / chronic urticaria", qty: "30 tablets",
+    costplus: { price: 3.60 }, amazon: { price: 8.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 2.40 }, goodrx: { price: 5.00 }, costco: { price: 4.50 } },
+
+  { name: "Levocetirizine", generic: "levocetirizine 5 mg", condition: "Allergic rhinitis", qty: "30 tablets",
+    costplus: { price: 3.90 }, amazon: { price: 10.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 3.60 }, goodrx: { price: 8.00 } },
+
+  { name: "Fexofenadine", generic: "fexofenadine 180 mg", condition: "Allergies", qty: "30 tablets",
+    costplus: { price: 4.20 }, amazon: { price: 10.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 3.60 }, goodrx: { price: 8.00 }, costco: { price: 5.10 } },
+
+  { name: "Desloratadine", generic: "desloratadine 5 mg", condition: "Allergies", qty: "30 tablets",
+    costplus: { price: 6.30 }, amazon: { price: 13.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 6.60 }, goodrx: { price: 12.00 } },
+
+  { name: "Hydroxyzine", generic: "hydroxyzine HCl 25 mg", condition: "Itch / allergies / anxiety", qty: "30 tablets",
+    costplus: { price: 3.60 }, amazon: { price: 9.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 3.30 }, goodrx: { price: 7.00 } },
+
+  { name: "Diphenhydramine Rx", generic: "diphenhydramine 50 mg", condition: "Allergies / sleep", qty: "30 capsules",
+    costplus: { price: 3.60 }, amazon: { price: 8.00, rxpass: true },
+    walmart: { price: 4.00 }, hwh: { price: 2.70 }, goodrx: { price: 6.00 } },
+
+  { name: "Azelastine nasal", generic: "azelastine 137 mcg nasal", condition: "Allergic rhinitis", qty: "1 bottle",
+    costplus: { price: 10.50 }, amazon: { price: 22.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 12.00 }, goodrx: { price: 18.00 } },
+
+  { name: "Mometasone nasal", generic: "mometasone 50 mcg nasal", condition: "Allergic rhinitis", qty: "1 bottle",
+    costplus: { price: 9.30 }, amazon: { price: 18.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 10.80 }, goodrx: { price: 15.00 } },
+
+  { name: "Triamcinolone nasal", generic: "triamcinolone 55 mcg nasal", condition: "Allergic rhinitis", qty: "1 bottle",
+    costplus: { price: 10.80 }, amazon: { price: 20.00 },
+    walmart: { price: 9.00 }, hwh: { price: 12.00 }, goodrx: { price: 17.00 } },
+
+  { name: "Olopatadine eye drops", generic: "olopatadine 0.1% ophthalmic", condition: "Eye allergies", qty: "5 mL bottle",
+    costplus: { price: 10.50 }, amazon: { price: 22.00, rxpass: true },
+    walmart: { price: 9.00 }, hwh: { price: 15.00 }, goodrx: { price: 18.00 } },
+
+  { name: "Epinephrine auto-injector", generic: "epinephrine 0.3 mg (EpiPen generic)", condition: "Anaphylaxis", qty: "2-pack",
+    amazon: { price: 310.00 }, goodrx: { price: 280.00, retail: 750.00 },
+    walmart: { price: 109.00 }, hwh: { price: 295.00 },
+    pap: { sponsor: "Viatris (EpiPen) Patient Assistance", url: "https://www.viatris.com/en/patients-caregivers/patient-assistance" } },
+
+  { name: "Dupixent", generic: "dupilumab", condition: "Severe eczema / asthma / nasal polyps", qty: "2 syringes (1 mo.)",
+    amazon: { price: 3800.00 }, goodrx: { price: 3650.00, retail: 4050.00 },
+    pap: { sponsor: "Sanofi/Regeneron Dupixent MyWay", url: "https://www.dupixent.com/support-savings/financial-assistance" } },
+
   { name: "Prednisone", generic: "prednisone 10 mg", condition: "Inflammation / autoimmune", qty: "30 tablets",
     costplus: { price: 3.90 }, amazon: { price: 9.00, rxpass: true },
     walmart: { price: 4.00 }, hwh: { price: 3.30 }, goodrx: { price: 7.00 } },
@@ -820,14 +872,26 @@ const condEl = document.getElementById("condition");
 const sortEl = document.getElementById("sort");
 const filterEl = document.getElementById("filter");
 
+/* Split compound conditions like "Allergies / sleep" into tags so
+   filtering by "Allergies" matches Diphenhydramine (Allergies / sleep),
+   Cetirizine (Allergies / chronic urticaria), Montelukast (Asthma / allergies),
+   etc. */
+function conditionTags(d) {
+  return d.condition.split(/\s*\/\s*/)
+    .map(t => t.trim())
+    .filter(Boolean)
+    // Capitalize first letter so "Depression / anxiety" → ["Depression", "Anxiety"]
+    // and we don't end up with "heart failure" vs "Heart failure" as two tags.
+    .map(t => t[0].toUpperCase() + t.slice(1));
+}
 function uniqueConditions() {
-  const set = new Set();
-  DRUGS.forEach(d => set.add(d.condition));
-  return [...set].sort();
+  const counts = new Map();
+  DRUGS.forEach(d => conditionTags(d).forEach(t => counts.set(t, (counts.get(t)||0) + 1)));
+  return [...counts.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
 }
 function populateConditions() {
   condEl.insertAdjacentHTML("beforeend",
-    uniqueConditions().map(c => `<option value="${c}">${c}</option>`).join(""));
+    uniqueConditions().map(([c,n]) => `<option value="${c}">${c} (${n})</option>`).join(""));
 }
 
 function matches(d, q) {
@@ -876,7 +940,7 @@ function render() {
 
   let list = DRUGS
     .filter(d => matches(d, q))
-    .filter(d => !cond || d.condition === cond)
+    .filter(d => !cond || conditionTags(d).includes(cond))
     .filter(d => sourceFilter(d, f))
     .slice()
     .sort((a, b) => compare(a, b, sort));
