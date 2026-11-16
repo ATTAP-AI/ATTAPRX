@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script src="https://attap.ai/attap-gate.js?v=20261116-gate1" data-agent="ATTAPRX"></script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -1028,6 +1029,9 @@ function syncClear() { qClear.hidden = !qEl.value; }
 qEl.addEventListener("input", syncClear);
 qClear.addEventListener("click", () => { qEl.value = ""; syncClear(); render(); qEl.focus(); });
 document.addEventListener("keydown", (e) => {
+  // A "/" typed into another field (the ATTAP sign-in password, say) is text, not the search shortcut.
+  const inOtherField = e.target !== qEl && e.target.closest && e.target.closest("input,textarea,select,[contenteditable]");
+  if (inOtherField) return;
   if ((e.key === "/" || ((e.metaKey || e.ctrlKey) && e.key === "k")) && document.activeElement !== qEl) {
     e.preventDefault(); qEl.focus(); qEl.select();
   } else if (e.key === "Escape" && document.activeElement === qEl) {
